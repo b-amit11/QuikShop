@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Quik Shop — Live Stock & Cashier Chat</title>
+<title>Quik Shop — Fuel Prices, Stock & Chat</title>
+<meta name="description" content="Quik Shop gas station and convenience store, 21265 Great Mills Rd, Lexington Park, MD. Live fuel prices, what's in stock, and chat with the cashier.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -129,6 +130,20 @@ h2.section:first-child{margin-top:0}
 .deskchat{height:360px;min-height:0}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--asphalt-3);border:1px solid var(--line);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
 .toast.show{opacity:1}
+.namein{margin-left:auto;background:var(--asphalt);border:1px solid var(--line);border-radius:8px;padding:7px 10px;outline:none;width:180px;min-width:0}
+.namein:focus{border-color:var(--signal)}
+.tmeta{display:flex;align-items:center;gap:8px;flex:none;color:var(--muted);font-size:12px}
+.login{max-width:420px;margin:10px auto}
+.login .muted{color:var(--muted);margin:-4px 0 14px;font-size:14px}
+.login form{display:flex;flex-direction:column;gap:10px}
+.login input{background:var(--asphalt);border:1px solid var(--line);border-radius:8px;padding:11px 12px;outline:none}
+.login input:focus{border-color:var(--signal)}
+.err{color:var(--stop);font-size:14px;min-height:1em}
+.staffbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;color:var(--muted);font-size:14px}
+.seed{margin-top:10px;width:100%}
+.foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:13px;padding-bottom:28px}
+.foot a{color:var(--muted)}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -140,7 +155,7 @@ h2.section:first-child{margin-top:0}
       </div>
       <div class="brand">
         <h1 id="stationName">Quik Shop</h1>
-        <div class="sub"><span id="stationHours">Live stock &amp; cashier chat</span> · <a id="stationAddr" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&amp;query=21265+Great+Mills+Rd%2C+Lexington+Park%2C+MD+20653">21265 Great Mills Rd, Lexington Park, MD 20653</a></div>
+        <div class="sub"><span id="stationHours">Gas &amp; convenience store</span> · <a id="stationAddr" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&amp;query=21265+Great+Mills+Rd%2C+Lexington+Park%2C+MD+20653">21265 Great Mills Rd, Lexington Park, MD 20653</a></div>
       </div>
       <span class="open-badge" id="openBadge"><i></i><span>Checking…</span></span>
     </div>
@@ -153,7 +168,7 @@ h2.section:first-child{margin-top:0}
 </header>
 
 <main class="wrap">
-  <div class="notice" id="globalNotice">Connecting to the station…</div>
+  <div class="notice" id="globalNotice">Connecting to the store…</div>
 
   <!-- STOCK -->
   <section class="view" id="view-stock">
@@ -174,8 +189,9 @@ h2.section:first-child{margin-top:0}
       <div class="chathead">
         <div>
           <div class="t">Cashier on duty</div>
-          <div class="s" id="chatStatus">Ask about stock, prices, or anything at the station.</div>
+          <div class="s" id="chatStatus">Ask about stock, prices, or anything at the store.</div>
         </div>
+        <input class="namein" id="custName" placeholder="Your name (optional)" maxlength="40" autocomplete="name">
       </div>
       <div class="msgs" id="custMsgs"></div>
       <div class="quick" id="quick">
@@ -192,8 +208,20 @@ h2.section:first-child{margin-top:0}
 
   <!-- CASHIER DESK -->
   <section class="view" id="view-desk">
+    <div class="panel login" id="deskLogin">
+      <h3>Staff sign in</h3>
+      <p class="muted">For Quik Shop cashiers and managers.</p>
+      <form id="loginForm">
+        <input id="loginEmail" type="email" placeholder="Email" autocomplete="username" required>
+        <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password" required>
+        <button class="btn" id="loginBtn">Sign in</button>
+        <div class="err" id="loginErr" role="alert"></div>
+      </form>
+    </div>
+    <div id="deskMain" hidden>
+    <div class="staffbar"><span id="staffWho"></span><button class="btn ghost" id="signOutBtn" type="button">Sign out</button></div>
     <div class="panel" style="margin-bottom:18px">
-      <h3>Station</h3>
+      <h3>Store</h3>
       <div class="settings">
         <input id="setName" placeholder="Station name" maxlength="60">
         <input id="setHours" placeholder="Hours, e.g. Open 24/7" maxlength="80">
@@ -211,6 +239,7 @@ h2.section:first-child{margin-top:0}
           <input id="addPrice" type="number" step="0.01" min="0" placeholder="Price">
           <button class="btn">Add</button>
         </form>
+        <button class="btn ghost seed" id="seedBtn" type="button" hidden>Load starter items</button>
       </div>
       <div class="panel">
         <h3>Customer messages</h3>
@@ -225,320 +254,15 @@ h2.section:first-child{margin-top:0}
         </div>
       </div>
     </div>
+    </div>
   </section>
 </main>
+<footer class="wrap foot">
+  <span>© Quik Shop · <span id="footAddr">21265 Great Mills Rd, Lexington Park, MD 20653</span></span>
+  <a href="#desk" id="staffLink">Staff sign in</a>
+</footer>
 <div class="toast" id="toast"></div>
 
-<script>
-const DEFAULT_NAME = "Quik Shop";
-const DEFAULT_ADDR = "21265 Great Mills Rd, Lexington Park, MD 20653";
-const CATS = ["Fuel","Drinks","Snacks","Hot food","Essentials","Auto"];
-const $ = id => document.getElementById(id);
-const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
-const money = n => (typeof n === "number" && isFinite(n)) ? "$" + n.toFixed(2) : "";
-const STATUS_LABEL = { in: "In stock", low: "Low", out: "Out" };
-const timeStr = t => { if (!t) return ""; const d = new Date(t); const now = new Date();
-  const same = d.toDateString() === now.toDateString();
-  return (same ? "" : d.toLocaleDateString([], {month:"short",day:"numeric"}) + " ") + d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); };
-function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2600); }
-function notice(msg){ $("globalNotice").textContent = msg || ""; }
-
-const state = { items: [], station: null, cat: "All", q: "", custMsgs: [], threads: [], selThread: null, deskMsgs: [], names: {} };
-let db = null, user = null, me = null, isCashier = false, canWrite = null, noDb = false;
-
-/* ---------- Routing ---------- */
-function route(){
-  let v = (location.hash || "#stock").slice(1);
-  if (!["stock","chat","desk"].includes(v) || (v === "desk" && !isCashier)) v = "stock";
-  document.querySelectorAll(".view").forEach(s => s.classList.toggle("active", s.id === "view-" + v));
-  document.querySelectorAll("nav a").forEach(a => a.classList.toggle("active", a.dataset.view === v));
-  state.view = v;
-  if (v === "chat") { markCustSeen(); scrollBottom($("custMsgs")); }
-}
-window.addEventListener("hashchange", route);
-
-/* ---------- Render: station ---------- */
-function renderStation(){
-  const s = state.station || {};
-  $("stationName").textContent = s.name || DEFAULT_NAME;
-  document.title = (s.name || DEFAULT_NAME) + " — Live Stock & Cashier Chat";
-  $("stationHours").textContent = s.hours || "Live stock & cashier chat";
-  const addr = s.address || DEFAULT_ADDR;
-  $("stationAddr").textContent = addr;
-  $("stationAddr").href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(addr);
-  const b = $("openBadge"); const open = s.open !== false;
-  b.className = "open-badge " + (state.station ? (open ? "open" : "closed") : "");
-  b.querySelector("span").textContent = state.station ? (open ? "Open now" : "Closed") : "Open now";
-  if (state.station) b.className = "open-badge " + (open ? "open" : "closed"); else b.className = "open-badge open";
-  if (isCashier) {
-    if (document.activeElement !== $("setName")) $("setName").value = s.name || "";
-    if (document.activeElement !== $("setHours")) $("setHours").value = s.hours || "";
-    if (document.activeElement !== $("setAddr")) $("setAddr").value = s.address || DEFAULT_ADDR;
-    $("setOpen").checked = s.open !== false;
-  }
-}
-
-/* ---------- Render: stock ---------- */
-function renderChips(){
-  const c = $("chips"); c.textContent = "";
-  ["All", ...CATS.filter(x => x !== "Fuel")].forEach(name => {
-    const b = el("button", "chip" + (state.cat === name ? " on" : ""), name);
-    b.type = "button"; b.onclick = () => { state.cat = name; renderChips(); renderStore(); };
-    c.appendChild(b);
-  });
-}
-function renderFuel(){
-  const f = $("fuelBoard"); f.textContent = "";
-  const fuels = state.items.filter(i => i.category === "Fuel");
-  if (!fuels.length) { f.appendChild(el("div","empty", db ? "No fuel grades listed yet." : noDb ? "Fuel prices unavailable in this view." : "Loading fuel prices…")); return; }
-  fuels.forEach(i => {
-    const p = el("div", "pump" + (i.status === "out" ? " out" : ""));
-    p.appendChild(el("div","grade", i.name));
-    const pr = el("div","price", money(i.price) || "—"); pr.appendChild(el("small",null,"/gal")); p.appendChild(pr);
-    p.appendChild(el("span","pill " + (i.status||"in"), STATUS_LABEL[i.status] || "In stock"));
-    f.appendChild(p);
-  });
-}
-function renderStore(){
-  const g = $("storeGrid"); g.textContent = "";
-  const q = state.q.trim().toLowerCase();
-  const list = state.items.filter(i => i.category !== "Fuel")
-    .filter(i => state.cat === "All" || i.category === state.cat)
-    .filter(i => !q || (i.name||"").toLowerCase().includes(q) || (i.category||"").toLowerCase().includes(q))
-    .sort((a,b) => (a.status === "out") - (b.status === "out") || (a.name||"").localeCompare(b.name||""));
-  if (!list.length) { g.appendChild(el("div","empty", !db ? (noDb ? "Store stock unavailable in this view." : "Loading the store shelves…") : (q || state.cat !== "All") ? "Nothing matches that. Try asking the cashier!" : "No items listed yet.")); }
-  list.forEach(i => {
-    const c = el("div", "card" + (i.status === "out" ? " out" : ""));
-    const r1 = el("div","row"); r1.appendChild(el("div","name", i.name)); r1.appendChild(el("div","p", money(i.price)));
-    const r2 = el("div","row"); r2.appendChild(el("div","cat", i.category)); r2.appendChild(el("span","pill " + (i.status||"in"), STATUS_LABEL[i.status] || "In stock"));
-    c.append(r1, r2); g.appendChild(c);
-  });
-  const latest = Math.max(0, ...state.items.map(i => i.updatedAt || 0));
-  $("updatedAt").textContent = latest ? "Stock last updated " + timeStr(latest) : "";
-}
-$("search").addEventListener("input", e => { state.q = e.target.value; renderStore(); });
-
-/* ---------- Render: messages ---------- */
-function scrollBottom(box){ requestAnimationFrame(() => box.scrollTop = box.scrollHeight); }
-function renderMsgs(box, msgs, mineSide, emptyText){
-  const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
-  box.textContent = "";
-  if (!msgs.length) { box.appendChild(el("div","empty", emptyText)); return; }
-  msgs.forEach(m => {
-    const b = el("div", "msg " + (m.from === mineSide ? "mine" : "theirs"), m.text);
-    b.appendChild(el("span","meta", (m.from === "cashier" ? "Cashier" : "Customer") + " · " + timeStr(m.at)));
-    box.appendChild(b);
-  });
-  if (atBottom || msgs[msgs.length-1]?.by === me) scrollBottom(box);
-}
-let custSeen = 0;
-try { custSeen = +localStorage.getItem("gs_seen") || 0; } catch(e) {}
-function markCustSeen(){
-  const last = state.custMsgs[state.custMsgs.length-1];
-  if (last) { custSeen = last.at; try { localStorage.setItem("gs_seen", String(custSeen)); } catch(e) {} }
-  $("chatDot").classList.remove("on");
-}
-function renderCustChat(){
-  renderMsgs($("custMsgs"), state.custMsgs, "customer", "No messages yet. Say hi — the cashier will reply here.");
-  const lastCashier = [...state.custMsgs].reverse().find(m => m.from === "cashier");
-  if (state.view === "chat") markCustSeen();
-  else $("chatDot").classList.toggle("on", !!lastCashier && lastCashier.at > custSeen);
-}
-
-/* ---------- Desk: inventory ---------- */
-function renderInventory(){
-  const box = $("invList"); box.textContent = "";
-  if (!state.items.length) box.appendChild(el("div","empty","No items yet — add your first one below."));
-  const sorted = [...state.items].sort((a,b) => CATS.indexOf(a.category) - CATS.indexOf(b.category) || (a.name||"").localeCompare(b.name||""));
-  sorted.forEach(i => {
-    const row = el("div","invrow");
-    const info = el("div"); info.appendChild(el("div","n", i.name)); info.appendChild(el("div","c", i.category)); row.appendChild(info);
-    const seg = el("div","seg");
-    ["in","low","out"].forEach(s => {
-      const b = el("button", s + (i.status === s ? " on" : ""), STATUS_LABEL[s]); b.type = "button";
-      b.onclick = () => { if (i.status !== s) write(`items/${i.id}`, "update", { status: s, updatedAt: Date.now() }); };
-      seg.appendChild(b);
-    });
-    row.appendChild(seg);
-    const pi = el("input","priceinput"); pi.type = "number"; pi.step = "0.01"; pi.min = "0"; pi.value = typeof i.price === "number" ? i.price.toFixed(2) : "";
-    pi.setAttribute("aria-label","Price of " + i.name);
-    const savePrice = () => { const v = parseFloat(pi.value); if (isFinite(v) && v !== i.price) write(`items/${i.id}`, "update", { price: Math.round(v*100)/100, updatedAt: Date.now() }); };
-    pi.addEventListener("change", savePrice);
-    row.appendChild(pi);
-    const del = el("button","btn danger","Remove"); del.type = "button";
-    del.onclick = () => {
-      if (!del.classList.contains("confirm")) { del.classList.add("confirm"); del.textContent = "Sure?"; setTimeout(() => { del.classList.remove("confirm"); del.textContent = "Remove"; }, 3000); return; }
-      write(`items/${i.id}`, "delete");
-    };
-    row.appendChild(del);
-    box.appendChild(row);
-  });
-}
-CATS.forEach(c => { const o = el("option", null, c); o.value = c; $("addCat").appendChild(o); });
-$("addCat").value = "Snacks";
-$("addForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  const name = $("addName").value.trim(); if (!name || !db) return;
-  const price = parseFloat($("addPrice").value);
-  try {
-    await db.collection("items").add({ name, category: $("addCat").value, price: isFinite(price) ? Math.round(price*100)/100 : null, status: "in", updatedAt: Date.now() });
-    $("addName").value = ""; $("addPrice").value = ""; toast("Added " + name);
-  } catch (err) { handleWriteError(err); }
-});
-
-/* ---------- Desk: station settings ---------- */
-function saveStation(){
-  if (!db) return;
-  const s = { name: $("setName").value.trim() || DEFAULT_NAME, hours: $("setHours").value.trim(), address: $("setAddr").value.trim() || DEFAULT_ADDR, open: $("setOpen").checked };
-  const cur = state.station || {};
-  if (s.name === cur.name && s.hours === (cur.hours||"") && s.address === (cur.address||DEFAULT_ADDR) && s.open === (cur.open !== false)) return;
-  write("station/info", "set", s);
-}
-$("setName").addEventListener("change", saveStation);
-$("setHours").addEventListener("change", saveStation);
-$("setAddr").addEventListener("change", saveStation);
-$("setOpen").addEventListener("change", saveStation);
-
-/* ---------- Desk: threads ---------- */
-async function resolveNames(ids){
-  if (!user || !ids.length) return;
-  try { const ps = await user.profiles(ids); ids.forEach(id => state.names[id] = (ps && ps[id] && ps[id].name) || ""); } catch(e) {}
-}
-const nameOf = id => state.names[id] || "Customer " + String(id).slice(-4);
-function renderThreads(){
-  const box = $("threadList"); box.textContent = "";
-  if (!state.threads.length) box.appendChild(el("div","empty","No customer messages yet."));
-  state.threads.forEach(t => {
-    const b = el("button","thread" + (state.selThread === t.id ? " sel" : "")); b.type = "button";
-    const l = el("div"); l.style.minWidth = "0";
-    l.appendChild(el("div","who", nameOf(t.id)));
-    l.appendChild(el("div","last", (t.lastFrom === "cashier" ? "You: " : "") + (t.lastText || "")));
-    b.appendChild(l);
-    const r = el("div"); r.style.cssText = "display:flex;align-items:center;gap:8px;flex:none";
-    r.appendChild(el("span","c", timeStr(t.lastAt))); r.lastChild.style.cssText = "color:var(--muted);font-size:12px";
-    if (t.unread) r.appendChild(el("span","u"));
-    b.appendChild(r);
-    b.onclick = () => openThread(t.id);
-    box.appendChild(b);
-  });
-  $("deskDot").classList.toggle("on", state.threads.some(t => t.unread));
-  if (state.selThread) { $("deskWho").textContent = nameOf(state.selThread); }
-}
-let deskUnsub = null;
-function openThread(id){
-  if (state.selThread === id) return;
-  state.selThread = id; state.deskMsgs = [];
-  if (deskUnsub) deskUnsub();
-  $("deskWho").textContent = nameOf(id); $("deskSub").textContent = "Replies go straight to this customer";
-  $("deskInput").disabled = false; $("deskSend").disabled = false;
-  renderMsgs($("deskMsgs"), [], "cashier", "Loading…");
-  deskUnsub = db.collection(`chats/${id}/msgs`).orderBy("at").limit(300).onSnapshot(snap => {
-    state.deskMsgs = snap.docs.map(d => d.data());
-    renderMsgs($("deskMsgs"), state.deskMsgs, "cashier", "No messages in this conversation.");
-    scrollBottom($("deskMsgs"));
-  }, err => console.warn(err));
-  const t = state.threads.find(x => x.id === id);
-  if (t && t.unread) write(`chats/${id}`, "update", { unread: false });
-  renderThreads();
-}
-
-/* ---------- Writes (one at a time per doc) ---------- */
-const queues = {};
-function write(path, op, data){
-  if (!db) return Promise.resolve();
-  const run = async () => {
-    try { const ref = db.doc(path); if (op === "delete") await ref.delete(); else await ref[op](data); }
-    catch (err) { handleWriteError(err); }
-  };
-  queues[path] = (queues[path] || Promise.resolve()).then(run);
-  return queues[path];
-}
-function handleWriteError(err){
-  console.warn(err);
-  const code = err && err.code;
-  if (code === "invalid_argument") toast("You don't have permission to do that here.");
-  else if (code === "quota_exceeded") toast("Storage is full — remove old items or conversations.");
-  else toast("Couldn't save — please try again.");
-}
-
-/* ---------- Sending ---------- */
-async function sendMsg(threadId, from, text){
-  const at = Date.now();
-  await db.collection(`chats/${threadId}/msgs`).add({ from, text, at, by: me });
-  const meta = { lastAt: at, lastText: text.slice(0, 120), lastFrom: from, unread: from === "customer" };
-  await write(`chats/${threadId}`, from === "customer" ? "set" : "update", from === "customer" ? { uid: threadId, ...meta } : meta);
-}
-$("custForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  const text = $("custInput").value.trim(); if (!text || !db || !me) return;
-  $("custInput").value = ""; $("custSend").disabled = true;
-  try { await sendMsg(me, "customer", text); } catch (err) { $("custInput").value = text; handleWriteError(err); }
-  $("custSend").disabled = false; $("custInput").focus();
-});
-$("quick").addEventListener("click", e => { if (e.target.tagName === "BUTTON") { $("custInput").value = e.target.textContent + " "; $("custInput").focus(); } });
-$("deskForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  const text = $("deskInput").value.trim(); if (!text || !db || !state.selThread) return;
-  $("deskInput").value = "";
-  try { await sendMsg(state.selThread, "cashier", text); } catch (err) { $("deskInput").value = text; handleWriteError(err); }
-  $("deskInput").focus();
-});
-
-function disableCustomerChat(msg){
-  $("custInput").disabled = true; $("custSend").disabled = true;
-  $("custInput").placeholder = msg; $("quick").style.display = "none";
-}
-
-/* ---------- Boot ---------- */
-renderChips(); renderFuel(); renderStore(); renderStation(); route();
-renderMsgs($("custMsgs"), [], "customer", "Connecting…");
-
-(async () => {
-  try {
-    [user, db] = await Promise.all([claude.use("user"), claude.use("db")]);
-  } catch (e) { db = null; }
-  if (!db) {
-    noDb = true;
-    notice("Live stock isn't available in this view. Sign in to claude.ai to see what's in stock and chat with the cashier.");
-    disableCustomerChat("Chat unavailable in this view");
-    renderFuel(); renderStore(); return;
-  }
-  try { me = user ? await user.id() : null; } catch(e) { me = null; }
-  try { isCashier = user ? !!(await user.canEdit()) : false; } catch(e) { isCashier = false; }
-  try { canWrite = user ? await user.can("data.write") : null; } catch(e) { canWrite = null; }
-  $("deskTab").hidden = !isCashier;
-  route();
-
-  let loaded = false;
-  const timer = setTimeout(() => { if (!loaded) notice("Can't reach the station right now — what you see may be out of date."); }, 10000);
-
-  db.doc("station/info").onSnapshot(s => { state.station = s.exists ? s.data() : null; renderStation(); }, e => console.warn(e));
-
-  db.collection("items").orderBy("name").limit(1000).onSnapshot(snap => {
-    state.items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    if (!snap.metadata.fromCache) { loaded = true; clearTimeout(timer); notice(""); }
-    renderFuel(); renderStore(); if (isCashier) renderInventory();
-  }, err => { clearTimeout(timer); notice("Couldn't load stock right now."); console.warn(err); });
-
-  if (!me || canWrite === false) {
-    disableCustomerChat(me ? "Ask the station for Contributor access to chat" : "Sign in to chat with the cashier");
-    renderMsgs($("custMsgs"), [], "customer", me ? "Your access to this page is view-only, so chat is turned off. The station can give you Contributor access from the Share menu." : "Sign in to chat with the cashier.");
-  } else {
-    db.collection(`chats/${me}/msgs`).orderBy("at").limit(300).onSnapshot(snap => {
-      state.custMsgs = snap.docs.map(d => d.data()); renderCustChat();
-    }, err => console.warn(err));
-  }
-
-  if (isCashier) {
-    renderInventory();
-    db.collection("chats").orderBy("lastAt","desc").limit(100).onSnapshot(async snap => {
-      state.threads = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const unknown = state.threads.map(t => t.id).filter(id => !(id in state.names));
-      renderThreads();
-      if (unknown.length) { await resolveNames(unknown); renderThreads(); }
-    }, err => console.warn(err));
-  }
-})();
-</script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

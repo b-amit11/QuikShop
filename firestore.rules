@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    // A user is staff if a document with their uid exists in /staff (added by hand in the Firebase console).
+    function isStaff() { return signedIn() && exists(/databases/$(database)/documents/staff/$(request.auth.uid)); }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+
+    // Fuel prices and store items: anyone can read, only staff can change.
+    match /items/{itemId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // Store name, hours, address, open/closed.
+    match /station/{docId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // Staff list: each person can only check their own entry. Managed in the console only.
+    match /staff/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // One conversation per customer, keyed by their (anonymous) user id.
+    match /chats/{uid} {
+      allow read: if isStaff() || isOwner(uid);
+      allow create, update: if isStaff() || (isOwner(uid)
+        && request.resource.data.keys().hasOnly(['lastAt', 'lastText', 'lastFrom', 'unread', 'name'])
+        && request.resource.data.lastFrom == 'customer');
+      allow delete: if isStaff();
+
+      match /msgs/{msgId} {
+        allow read: if isStaff() || isOwner(uid);
+        allow create: if signedIn()
+          && request.resource.data.keys().hasOnly(['from', 'text', 'at', 'by'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 1000
+          && request.resource.data.by == request.auth.uid
+          && ((isOwner(uid) && request.resource.data.from == 'customer')
+              || (isStaff() && request.resource.data.from == 'cashier'));
+        allow update, delete: if isStaff();
+      }
+    }
+  }
+}
